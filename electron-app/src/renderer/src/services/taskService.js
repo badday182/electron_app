@@ -92,6 +92,77 @@ const createTaskDirectly = async (taskData) => {
 }
 
 /**
+ * Обновляет задачу через прямой HTTP запрос
+ * @param {number|string} taskId - ID задачи для обновления
+ * @param {Object} taskData - новые данные задачи
+ * @returns {Promise<Object>} Обновлённая задача
+ */
+const updateTaskDirectly = async (taskId, taskData) => {
+  console.log('Sending direct PATCH request to update task:', taskId, taskData)
+  console.log('Request URL:', `http://localhost:3000/tasks/${taskId}`)
+  console.log('Request body:', JSON.stringify(taskData))
+
+  let response
+  try {
+    response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(taskData)
+    })
+    console.log('Update response received successfully')
+  } catch (fetchError) {
+    console.error('Update fetch failed:', fetchError)
+    console.error('Error details:', fetchError.message)
+    console.error('Error stack:', fetchError.stack)
+
+    // Проверяем, доступен ли сервер вообще
+    try {
+      const testResponse = await fetch('http://localhost:3000/', { method: 'GET' })
+      console.log('Server is accessible, test response status:', testResponse.status)
+      throw new Error('Сервер доступен, но PUT запрос не удался: ' + fetchError.message)
+    } catch (serverError) {
+      console.error('Server test failed:', serverError)
+      throw new Error('Сервер на http://localhost:3000 недоступен. Убедитесь, что сервер запущен.')
+    }
+  }
+
+  console.log('Update response status:', response.status)
+  console.log('Update response headers:', [...response.headers.entries()])
+
+  if (!response.ok) {
+    let errorMessage = `HTTP error! status: ${response.status}`
+    try {
+      const errorData = await response.json()
+      console.log('Error response data:', errorData)
+      if (errorData.message) {
+        errorMessage += ` - ${errorData.message}`
+      }
+      if (errorData.error) {
+        errorMessage += ` - ${errorData.error}`
+      }
+    } catch (parseError) {
+      console.error('Failed to parse error response:', parseError)
+      try {
+        const errorText = await response.text()
+        console.log('Error response text:', errorText)
+        if (errorText) {
+          errorMessage += ` - ${errorText}`
+        }
+      } catch {
+        // Игнорируем ошибки парсинга
+      }
+    }
+    throw new Error(errorMessage)
+  }
+
+  const result = await response.json()
+  console.log('Update successful, result:', result)
+  return result
+}
+
+/**
  * Удаляет задачу через прямой HTTP запрос
  * @param {number|string} taskId - ID задачи для удаления
  * @returns {Promise<boolean>} true если задача успешно удалена
@@ -232,5 +303,35 @@ export const deleteTask = async (taskId) => {
     // Fallback для разработки в браузере - отправляем DELETE запрос к бэкенду
     console.log('No Electron IPC available, using direct HTTP request for task ID:', taskId)
     return await deleteTaskDirectly(taskId)
+  }
+}
+
+/**
+ * Обновляет задачу
+ * @param {number|string} taskId - ID задачи для обновления
+ * @param {Object} taskData - новые данные задачи
+ * @returns {Promise<Object>} Обновлённая задача
+ */
+export const updateTask = async (taskId, taskData) => {
+  console.log('Attempting to update task with ID:', taskId, taskData)
+
+  // Проверяем, доступно ли API для обновления задач через IPC
+  if (window.api && window.api.updateTask) {
+    // Используем IPC для Electron
+    console.log('Using Electron IPC API to update task:', taskId)
+    try {
+      const result = await window.api.updateTask(taskId, taskData)
+      console.log('Task updated successfully via IPC:', result)
+      return result
+    } catch (ipcError) {
+      console.error('IPC updateTask failed:', ipcError)
+      // Fallback к прямому HTTP запросу если IPC не работает
+      console.log('Falling back to direct HTTP request...')
+      return await updateTaskDirectly(taskId, taskData)
+    }
+  } else {
+    // Fallback для разработки в браузере - отправляем PUT запрос к бэкенду
+    console.log('No Electron IPC available, using direct HTTP request for task ID:', taskId)
+    return await updateTaskDirectly(taskId, taskData)
   }
 }

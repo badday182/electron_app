@@ -37,37 +37,37 @@ const TaskForm = ({ onSubmit, onCancel }) => {
 
   return (
     <div className="create-task-form">
-      <h3>Создание новой задачи</h3>
+      <h3>Add new task</h3>
 
       <div className="form-group">
-        <label>Название:</label>
+        <label>Title:</label>
         <input
           type="text"
           className="form-input"
           value={formData.title}
           onChange={(e) => handleInputChange('title', e.target.value)}
-          placeholder="Введите название задачи"
+          placeholder="Enter task title"
           disabled={isSubmitting}
         />
       </div>
 
       <div className="form-group">
-        <label>Описание:</label>
+        <label>Description:</label>
         <textarea
           className="form-textarea"
           value={formData.description}
           onChange={(e) => handleInputChange('description', e.target.value)}
-          placeholder="Введите описание задачи (необязательно)"
+          placeholder="Enter task description (optional)"
           disabled={isSubmitting}
         />
       </div>
 
       <div className="form-buttons">
         <button className="btn-primary" onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? 'Создание...' : 'Создать'}
+          {isSubmitting ? 'Adding...' : 'Add'}
         </button>
         <button className="btn-secondary" onClick={handleCancel} disabled={isSubmitting}>
-          Отмена
+          Cancel
         </button>
       </div>
     </div>

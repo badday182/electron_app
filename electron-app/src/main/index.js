@@ -196,6 +196,63 @@ ipcMain.handle('delete-task', async (event, taskId) => {
   }
 })
 
+// IPC handler для обновления задач
+ipcMain.handle('update-task', async (event, taskId, taskData) => {
+  try {
+    console.log('Main process: Updating task with ID:', taskId, 'Data:', taskData)
+
+    // Используем встроенный fetch если доступен, иначе node-fetch
+    let fetchFunction
+    if (typeof fetch !== 'undefined') {
+      console.log('Main process: Using built-in fetch for update')
+      fetchFunction = fetch
+    } else {
+      console.log('Main process: Using node-fetch for update')
+      fetchFunction = (await import('node-fetch')).default
+    }
+
+    console.log('Main process: Sending PATCH request to http://localhost:3000/tasks/' + taskId)
+
+    const requestBody = JSON.stringify(taskData)
+    console.log('Main process: Update request body:', requestBody)
+
+    const response = await fetchFunction(`http://localhost:3000/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: requestBody
+    })
+
+    console.log('Main process: Update response status:', response.status)
+    console.log('Main process: Update response statusText:', response.statusText)
+
+    if (!response.ok) {
+      let errorDetails = `HTTP error! status: ${response.status}`
+      try {
+        const errorText = await response.text()
+        console.log('Main process: Update error response body:', errorText)
+        errorDetails += ` - ${errorText}`
+      } catch (textError) {
+        console.log('Main process: Could not read update error response body:', textError.message)
+      }
+      throw new Error(errorDetails)
+    }
+
+    const data = await response.json()
+    console.log('Main process: Task updated successfully:', data)
+    return data
+  } catch (error) {
+    console.error('Error updating task in main process:', error)
+    console.error('Update error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    throw error
+  }
+})
+
 app.on('activate', function () {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.

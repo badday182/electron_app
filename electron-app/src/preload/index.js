@@ -5,7 +5,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   fetchTasks: () => ipcRenderer.invoke('fetch-tasks'),
   createTask: (task) => ipcRenderer.invoke('create-task', task),
-  deleteTask: (taskId) => ipcRenderer.invoke('delete-task', taskId)
+  deleteTask: (taskId) => ipcRenderer.invoke('delete-task', taskId),
+  updateTask: (taskId, taskData) => ipcRenderer.invoke('update-task', taskId, taskData)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -6,7 +6,7 @@ import './assets/app.css'
 
 function App() {
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { tasks, loading, error, createTask, deleteTask } = useTasks()
+  const { tasks, loading, error, createTask, deleteTask, updateTask } = useTasks()
 
   const handleCreateTask = async (taskData) => {
     await createTask(taskData)
@@ -18,6 +18,14 @@ function App() {
       await deleteTask(taskId)
     } catch (err) {
       alert('Ошибка при удалении задачи: ' + err.message)
+    }
+  }
+
+  const handleToggleComplete = async (taskId, currentCompleted) => {
+    try {
+      await updateTask(taskId, { completed: !currentCompleted })
+    } catch (err) {
+      alert('Ошибка при обновлении задачи: ' + err.message)
     }
   }
 
@@ -37,7 +45,7 @@ function App() {
     <div className="app-container">
       <div className="header-section">
         <button className="create-task-button" onClick={() => setShowCreateForm(true)}>
-          Создать новую задачу
+          Add New Task
         </button>
       </div>
 
@@ -48,7 +56,12 @@ function App() {
           <div className="no-tasks">Нет задач для отображения</div>
         ) : (
           tasks.map((task, index) => (
-            <TaskCard key={task.id || index} task={task} onDelete={handleDeleteTask} />
+            <TaskCard
+              key={task.id || index}
+              task={task}
+              onDelete={handleDeleteTask}
+              onToggleComplete={handleToggleComplete}
+            />
           ))
         )}
       </div>

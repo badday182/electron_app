@@ -51,11 +51,24 @@ export const useTasks = () => {
     }
   }
 
+  // Функция для обновления задачи
+  const handleUpdateTask = async (taskId, taskData) => {
+    try {
+      const updatedTask = await taskService.updateTask(taskId, taskData)
+      setTasks((prevTasks) => prevTasks.map((task) => (task.id === taskId ? updatedTask : task)))
+      return updatedTask
+    } catch (err) {
+      console.error('Error updating task:', err)
+      throw err
+    }
+  }
+
   return {
     tasks,
     loading,
     error,
     createTask: handleCreateTask,
-    deleteTask: handleDeleteTask
+    deleteTask: handleDeleteTask,
+    updateTask: handleUpdateTask
   }
 }
