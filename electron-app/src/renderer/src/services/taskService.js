@@ -253,7 +253,7 @@ export const createTask = async (taskData) => {
     id: Date.now(), // Временный ID для локальных задач
     title: taskData.title,
     description: taskData.description,
-    completed: false
+    completed: taskData.completed !== undefined ? taskData.completed : false
   }
 
   // Проверяем, доступно ли API для создания задач

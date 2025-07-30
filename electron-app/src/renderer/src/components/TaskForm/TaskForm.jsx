@@ -5,7 +5,7 @@ import './TaskForm.css'
  * Компонент формы для создания новой задачи
  */
 const TaskForm = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({ title: '', description: '' })
+  const [formData, setFormData] = useState({ title: '', description: '', completed: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -18,7 +18,7 @@ const TaskForm = ({ onSubmit, onCancel }) => {
       setIsSubmitting(true)
       await onSubmit(formData)
       // Очищаем форму после успешного создания
-      setFormData({ title: '', description: '' })
+      setFormData({ title: '', description: '', completed: false })
     } catch (error) {
       alert('Ошибка при создании задачи: ' + error.message)
     } finally {
@@ -27,7 +27,7 @@ const TaskForm = ({ onSubmit, onCancel }) => {
   }
 
   const handleCancel = () => {
-    setFormData({ title: '', description: '' })
+    setFormData({ title: '', description: '', completed: false })
     onCancel()
   }
 
@@ -60,6 +60,19 @@ const TaskForm = ({ onSubmit, onCancel }) => {
           placeholder="Enter task description (optional)"
           disabled={isSubmitting}
         />
+      </div>
+
+      <div className="form-group">
+        <label>Status:</label>
+        <select
+          className="form-input"
+          value={formData.completed}
+          onChange={(e) => handleInputChange('completed', e.target.value === 'true')}
+          disabled={isSubmitting}
+        >
+          <option value="true">Completed</option>
+          <option value="false">Pending</option>
+        </select>
       </div>
 
       <div className="form-buttons">
