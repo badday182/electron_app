@@ -79,6 +79,71 @@ ipcMain.handle('fetch-tasks', async () => {
   }
 })
 
+// IPC handler для создания задач
+ipcMain.handle('create-task', async (event, task) => {
+  try {
+    console.log('Main process: Creating task with data:', task)
+    console.log('Main process: Node.js version:', process.version)
+
+    // Используем встроенный fetch если доступен, иначе node-fetch
+    let fetchFunction
+    if (typeof fetch !== 'undefined') {
+      console.log('Main process: Using built-in fetch')
+      fetchFunction = fetch
+    } else {
+      console.log('Main process: Using node-fetch')
+      fetchFunction = (await import('node-fetch')).default
+    }
+
+    console.log('Main process: Sending POST request to http://localhost:3000/tasks')
+
+    // Убираем поле id из запроса, так как сервер должен генерировать его сам
+    const taskForServer = {
+      title: task.title,
+      description: task.description,
+      completed: task.completed
+    }
+    const requestBody = JSON.stringify(taskForServer)
+    console.log('Main process: Request body:', requestBody)
+
+    const response = await fetchFunction('http://localhost:3000/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: requestBody
+    })
+
+    console.log('Main process: Response status:', response.status)
+    console.log('Main process: Response statusText:', response.statusText)
+
+    if (!response.ok) {
+      // Попытаемся получить больше информации об ошибке
+      let errorDetails = `HTTP error! status: ${response.status}`
+      try {
+        const errorText = await response.text()
+        console.log('Main process: Error response body:', errorText)
+        errorDetails += ` - ${errorText}`
+      } catch (textError) {
+        console.log('Main process: Could not read error response body:', textError.message)
+      }
+      throw new Error(errorDetails)
+    }
+
+    const data = await response.json()
+    console.log('Main process: Task created successfully:', data)
+    return data
+  } catch (error) {
+    console.error('Error creating task in main process:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    throw error
+  }
+})
+
 app.on('activate', function () {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
