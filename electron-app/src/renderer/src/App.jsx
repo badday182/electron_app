@@ -26,7 +26,7 @@ function App() {
   }
 
   return (
-    <div>
+    <div className="app-container">
       <div className="header-section">
         <button className="create-task-button" onClick={() => setShowCreateForm(true)}>
           Создать новую задачу
@@ -35,11 +35,13 @@ function App() {
 
       {showCreateForm && <TaskForm onSubmit={handleCreateTask} onCancel={handleCancelCreate} />}
 
-      {tasks.length === 0 ? (
-        <div className="no-tasks">Нет задач для отображения</div>
-      ) : (
-        tasks.map((task, index) => <TaskCard key={task.id || index} task={task} />)
-      )}
+      <div className="tasks-container">
+        {tasks.length === 0 ? (
+          <div className="no-tasks">Нет задач для отображения</div>
+        ) : (
+          tasks.map((task, index) => <TaskCard key={task.id || index} task={task} />)
+        )}
+      </div>
     </div>
   )
 }

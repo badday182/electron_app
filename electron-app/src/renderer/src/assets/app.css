@@ -94,3 +94,35 @@
   color: #666;
   font-style: italic;
 }
+
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.tasks-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.tasks-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tasks-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.tasks-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.tasks-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
