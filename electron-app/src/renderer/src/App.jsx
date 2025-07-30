@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import TaskCard from './components/taskCard/TaskCard.jsx'
 import TaskForm from './components/TaskForm/TaskForm.jsx'
+import TaskTabs from './components/TaskTabs/TaskTabs.jsx'
 import { useTasks } from './hooks/useTasks.js'
 import './assets/app.css'
 
 function App() {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [activeTab, setActiveTab] = useState('all')
   const { tasks, loading, error, createTask, deleteTask, updateTask } = useTasks()
 
   const handleCreateTask = async (taskData) => {
@@ -33,6 +35,34 @@ function App() {
     setShowCreateForm(false)
   }
 
+  // Фильтрация задач по активной вкладке
+  const filteredTasks = useMemo(() => {
+    switch (activeTab) {
+      case 'pending':
+        return tasks.filter((task) => !task.completed)
+      case 'completed':
+        return tasks.filter((task) => task.completed)
+      case 'all':
+      default:
+        return tasks
+    }
+  }, [tasks, activeTab])
+
+  // Подсчет задач для каждой вкладки
+  const taskCounts = useMemo(() => {
+    const pending = tasks.filter((task) => !task.completed).length
+    const completed = tasks.filter((task) => task.completed).length
+    return {
+      all: tasks.length,
+      pending,
+      completed
+    }
+  }, [tasks])
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+  }
+
   if (loading) {
     return <div>Загрузка задач...</div>
   }
@@ -51,11 +81,17 @@ function App() {
 
       {showCreateForm && <TaskForm onSubmit={handleCreateTask} onCancel={handleCancelCreate} />}
 
+      <TaskTabs activeTab={activeTab} onTabChange={handleTabChange} taskCounts={taskCounts} />
+
       <div className="tasks-container">
-        {tasks.length === 0 ? (
-          <div className="no-tasks">Нет задач для отображения</div>
+        {filteredTasks.length === 0 ? (
+          <div className="no-tasks">
+            {activeTab === 'all' && 'No tasks available'}
+            {activeTab === 'pending' && 'No pending tasks'}
+            {activeTab === 'completed' && 'No completed tasks'}
+          </div>
         ) : (
-          tasks.map((task, index) => (
+          filteredTasks.map((task, index) => (
             <TaskCard
               key={task.id || index}
               task={task}
