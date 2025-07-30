@@ -19,6 +19,9 @@
   border-radius: 8px;
   margin-bottom: 20px;
   border: 1px solid #ddd;
+  h3 {
+    color: black;
+  }
 }
 
 .form-group {
@@ -26,6 +29,7 @@
 }
 
 .form-group label {
+  color: black;
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
