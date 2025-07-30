@@ -6,11 +6,19 @@ import './assets/app.css'
 
 function App() {
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { tasks, loading, error, createTask } = useTasks()
+  const { tasks, loading, error, createTask, deleteTask } = useTasks()
 
   const handleCreateTask = async (taskData) => {
     await createTask(taskData)
     setShowCreateForm(false)
+  }
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await deleteTask(taskId)
+    } catch (err) {
+      alert('Ошибка при удалении задачи: ' + err.message)
+    }
   }
 
   const handleCancelCreate = () => {
@@ -39,7 +47,9 @@ function App() {
         {tasks.length === 0 ? (
           <div className="no-tasks">Нет задач для отображения</div>
         ) : (
-          tasks.map((task, index) => <TaskCard key={task.id || index} task={task} />)
+          tasks.map((task, index) => (
+            <TaskCard key={task.id || index} task={task} onDelete={handleDeleteTask} />
+          ))
         )}
       </div>
     </div>

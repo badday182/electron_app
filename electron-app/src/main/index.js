@@ -144,6 +144,58 @@ ipcMain.handle('create-task', async (event, task) => {
   }
 })
 
+// IPC handler для удаления задач
+ipcMain.handle('delete-task', async (event, taskId) => {
+  try {
+    console.log('Main process: Deleting task with ID:', taskId)
+
+    // Используем встроенный fetch если доступен, иначе node-fetch
+    let fetchFunction
+    if (typeof fetch !== 'undefined') {
+      console.log('Main process: Using built-in fetch for delete')
+      fetchFunction = fetch
+    } else {
+      console.log('Main process: Using node-fetch for delete')
+      fetchFunction = (await import('node-fetch')).default
+    }
+
+    console.log('Main process: Sending DELETE request to http://localhost:3000/tasks/' + taskId)
+
+    const response = await fetchFunction(`http://localhost:3000/tasks/${taskId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    console.log('Main process: Delete response status:', response.status)
+    console.log('Main process: Delete response statusText:', response.statusText)
+
+    if (!response.ok) {
+      let errorDetails = `HTTP error! status: ${response.status}`
+      try {
+        const errorText = await response.text()
+        console.log('Main process: Delete error response body:', errorText)
+        errorDetails += ` - ${errorText}`
+      } catch (textError) {
+        console.log('Main process: Could not read delete error response body:', textError.message)
+      }
+      throw new Error(errorDetails)
+    }
+
+    console.log('Main process: Task deleted successfully')
+    return true
+  } catch (error) {
+    console.error('Error deleting task in main process:', error)
+    console.error('Delete error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    throw error
+  }
+})
+
 app.on('activate', function () {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.

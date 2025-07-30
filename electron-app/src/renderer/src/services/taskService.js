@@ -92,6 +92,87 @@ const createTaskDirectly = async (taskData) => {
 }
 
 /**
+ * Удаляет задачу через прямой HTTP запрос
+ * @param {number|string} taskId - ID задачи для удаления
+ * @returns {Promise<boolean>} true если задача успешно удалена
+ */
+const deleteTaskDirectly = async (taskId) => {
+  console.log('Sending direct DELETE request for task:', taskId)
+  console.log('URL:', `http://localhost:3000/tasks/${taskId}`)
+
+  try {
+    const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      mode: 'cors'
+    })
+
+    console.log('Delete response received successfully, status:', response.status)
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
+    // Для DELETE запросов часто возвращается 204 (No Content) или 200
+    if (response.ok) {
+      console.log('Task deleted successfully')
+      return true
+    } else {
+      // Попытаемся получить детали ошибки от сервера
+      let errorMessage = `HTTP error! status: ${response.status}`
+      try {
+        const errorData = await response.json()
+        console.log('Error response data:', errorData)
+        if (errorData.message) {
+          errorMessage += ` - ${errorData.message}`
+        }
+        if (errorData.error) {
+          errorMessage += ` - ${errorData.error}`
+        }
+      } catch {
+        try {
+          const errorText = await response.text()
+          console.log('Error response text:', errorText)
+          if (errorText) {
+            errorMessage += ` - ${errorText}`
+          }
+        } catch {
+          // Игнорируем ошибки парсинга
+        }
+      }
+      throw new Error(errorMessage)
+    }
+  } catch (fetchError) {
+    console.error('Delete fetch failed with error:', fetchError)
+    console.error('Error name:', fetchError.name)
+    console.error('Error message:', fetchError.message)
+    console.error('Error stack:', fetchError.stack)
+
+    // Если это ошибка сети (TypeError), то сервер недоступен
+    if (fetchError instanceof TypeError) {
+      // Попробуем сначала проверить, доступен ли сервер вообще
+      try {
+        console.log('Testing server availability...')
+        const testResponse = await fetch('http://localhost:3000/', { method: 'GET' })
+        console.log('Server test response status:', testResponse.status)
+        throw new Error(
+          `Сервер доступен (статус ${testResponse.status}), но DELETE запрос к /tasks/${taskId} не удался: ${fetchError.message}`
+        )
+      } catch (testError) {
+        console.error('Server test also failed:', testError)
+        throw new Error(
+          'Сервер на http://localhost:3000 недоступен. Убедитесь, что сервер запущен.'
+        )
+      }
+    }
+
+    // Если это другая ошибка, передаем её как есть
+    throw fetchError
+  }
+}
+
+/**
  * Создает новую задачу
  * @param {Object} taskData - данные задачи
  * @returns {Promise<Object>} Созданная задача
@@ -122,5 +203,34 @@ export const createTask = async (taskData) => {
     // Fallback для разработки в браузере - отправляем POST запрос к бэкенду
     console.log('No Electron IPC available, using direct HTTP request')
     return await createTaskDirectly(taskToCreate)
+  }
+}
+
+/**
+ * Удаляет задачу
+ * @param {number|string} taskId - ID задачи для удаления
+ * @returns {Promise<boolean>} true если задача успешно удалена
+ */
+export const deleteTask = async (taskId) => {
+  console.log('Attempting to delete task with ID:', taskId)
+
+  // Проверяем, доступно ли API для удаления задач через IPC
+  if (window.api && window.api.deleteTask) {
+    // Используем IPC для Electron
+    console.log('Using Electron IPC API to delete task:', taskId)
+    try {
+      const result = await window.api.deleteTask(taskId)
+      console.log('Task deleted successfully via IPC:', result)
+      return result
+    } catch (ipcError) {
+      console.error('IPC deleteTask failed:', ipcError)
+      // Fallback к прямому HTTP запросу если IPC не работает
+      console.log('Falling back to direct HTTP request...')
+      return await deleteTaskDirectly(taskId)
+    }
+  } else {
+    // Fallback для разработки в браузере - отправляем DELETE запрос к бэкенду
+    console.log('No Electron IPC available, using direct HTTP request for task ID:', taskId)
+    return await deleteTaskDirectly(taskId)
   }
 }

@@ -12,9 +12,32 @@ p {
   color: black;
 }
 
+.task-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .task-card button {
   color: black;
-  margin-right: 8px;
   padding: 6px 12px;
   cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.task-card button:hover {
+  background-color: #e0e0e0;
+}
+
+.task-card .delete-button {
+  background-color: #ffebee;
+  border-color: #f44336;
+  color: #d32f2f;
+}
+
+.task-card .delete-button:hover {
+  background-color: #ffcdd2;
 }

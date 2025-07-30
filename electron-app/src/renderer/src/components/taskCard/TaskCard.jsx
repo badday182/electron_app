@@ -2,6 +2,12 @@
 import './index.css'
 
 const TaskCard = ({ task, onEdit, onDelete }) => {
+  const handleDelete = () => {
+    if (window.confirm(`Вы уверены, что хотите удалить задачу "${task.title}"?`)) {
+      onDelete(task.id)
+    }
+  }
+
   return (
     <div className="task-card">
       <h3>{task.title}</h3>
@@ -9,10 +15,12 @@ const TaskCard = ({ task, onEdit, onDelete }) => {
       {/* <p>
         Статус: <strong>{task.completed ? 'Виконана' : 'Не виконана'}</strong>
       </p> */}
-      {/* <button onClick={() => onEdit(task)}>Редагувати</button>
-      <button onClick={() => onDelete(task.id)}>Видалити</button> */}
-      <button>Редагувати</button>
-      <button>Видалити</button>
+      <div className="task-card-actions">
+        <button onClick={() => onEdit && onEdit(task)}>Редагувати</button>
+        <button onClick={handleDelete} className="delete-button">
+          Видалити
+        </button>
+      </div>
     </div>
   )
 }

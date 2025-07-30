@@ -39,10 +39,23 @@ export const useTasks = () => {
     }
   }
 
+  // Функция для удаления задачи
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await taskService.deleteTask(taskId)
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId))
+      return true
+    } catch (err) {
+      console.error('Error deleting task:', err)
+      throw err
+    }
+  }
+
   return {
     tasks,
     loading,
     error,
-    createTask: handleCreateTask
+    createTask: handleCreateTask,
+    deleteTask: handleDeleteTask
   }
 }
