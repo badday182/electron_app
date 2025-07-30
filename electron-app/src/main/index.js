@@ -13,7 +13,12 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      webSecurity: false, // Разрешаем запросы к localhost
+      nodeIntegration: false,
+      contextIsolation: true,
+      allowRunningInsecureContent: true,
+      experimentalFeatures: true
     }
   })
 
@@ -53,12 +58,31 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
+})
 
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+// IPC handler для получения задач
+ipcMain.handle('fetch-tasks', async () => {
+  try {
+    // Импортируем fetch для Node.js (если нужно)
+    const fetch = (await import('node-fetch')).default
+    const response = await fetch('http://localhost:3000/tasks')
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error fetching tasks in main process:', error)
+    throw error
+  }
+})
+
+app.on('activate', function () {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
