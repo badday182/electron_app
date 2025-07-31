@@ -9,6 +9,7 @@ function App() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
   const [activeTab, setActiveTab] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const { tasks, loading, error, createTask, deleteTask, updateTask } = useTasks()
 
   const handleCreateTask = async (taskData) => {
@@ -54,18 +55,36 @@ function App() {
     setEditingTask(null)
   }
 
-  // Фильтрация задач по активной вкладке
+  // Фильтрация задач по активной вкладке и поисковому запросу
   const filteredTasks = useMemo(() => {
+    let filtered = tasks
+
+    // Фильтрация по вкладке
     switch (activeTab) {
       case 'pending':
-        return tasks.filter((task) => !task.completed)
+        filtered = tasks.filter((task) => !task.completed)
+        break
       case 'completed':
-        return tasks.filter((task) => task.completed)
+        filtered = tasks.filter((task) => task.completed)
+        break
       case 'all':
       default:
-        return tasks
+        filtered = tasks
+        break
     }
-  }, [tasks, activeTab])
+
+    // Фильтрация по поисковому запросу
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter((task) => {
+        const title = (task.title || '').toLowerCase()
+        const description = (task.description || '').toLowerCase()
+        return title.includes(query) || description.includes(query)
+      })
+    }
+
+    return filtered
+  }, [tasks, activeTab, searchQuery])
 
   // Подсчет задач для каждой вкладки
   const taskCounts = useMemo(() => {
@@ -80,6 +99,10 @@ function App() {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId)
+  }
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query)
   }
 
   if (loading) {
@@ -110,12 +133,28 @@ function App() {
 
       <TaskTabs activeTab={activeTab} onTabChange={handleTabChange} taskCounts={taskCounts} />
 
+      <div className="search-section">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search tasks by title or description..."
+          value={searchQuery}
+          onChange={(e) => handleSearchChange(e.target.value)}
+        />
+      </div>
+
       <div className="tasks-container">
         {filteredTasks.length === 0 ? (
           <div className="no-tasks">
-            {activeTab === 'all' && 'No tasks available'}
-            {activeTab === 'pending' && 'No pending tasks'}
-            {activeTab === 'completed' && 'No completed tasks'}
+            {searchQuery.trim() ? (
+              `No tasks found for "${searchQuery}"`
+            ) : (
+              <>
+                {activeTab === 'all' && 'No tasks available'}
+                {activeTab === 'pending' && 'No pending tasks'}
+                {activeTab === 'completed' && 'No completed tasks'}
+              </>
+            )}
           </div>
         ) : (
           filteredTasks.map((task, index) => (
