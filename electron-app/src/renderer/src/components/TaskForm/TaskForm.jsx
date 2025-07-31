@@ -1,12 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './TaskForm.css'
 
 /**
- * Компонент формы для создания новой задачи
+ * Компонент формы для создания или редактирования задачи
  */
-const TaskForm = ({ onSubmit, onCancel }) => {
+const TaskForm = ({ onSubmit, onCancel, editTask = null }) => {
   const [formData, setFormData] = useState({ title: '', description: '', completed: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Заполняем форму данными задачи при редактировании
+  useEffect(() => {
+    if (editTask) {
+      setFormData({
+        title: editTask.title || '',
+        description: editTask.description || '',
+        completed: editTask.completed || false
+      })
+    } else {
+      setFormData({ title: '', description: '', completed: false })
+    }
+  }, [editTask])
 
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
@@ -16,11 +29,17 @@ const TaskForm = ({ onSubmit, onCancel }) => {
 
     try {
       setIsSubmitting(true)
-      await onSubmit(formData)
-      // Очищаем форму после успешного создания
+      if (editTask) {
+        // При редактировании передаем ID задачи и новые данные
+        await onSubmit(editTask.id, formData)
+      } else {
+        // При создании передаем только данные
+        await onSubmit(formData)
+      }
+      // Очищаем форму после успешного создания/обновления
       setFormData({ title: '', description: '', completed: false })
     } catch (error) {
-      alert('Ошибка при создании задачи: ' + error.message)
+      alert(`Ошибка при ${editTask ? 'обновлении' : 'создании'} задачи: ` + error.message)
     } finally {
       setIsSubmitting(false)
     }
@@ -37,7 +56,7 @@ const TaskForm = ({ onSubmit, onCancel }) => {
 
   return (
     <div className="create-task-form">
-      <h3>Add new task</h3>
+      <h3>{editTask ? 'Edit task' : 'Add new task'}</h3>
 
       <div className="form-group">
         <label>Title:</label>
@@ -77,7 +96,7 @@ const TaskForm = ({ onSubmit, onCancel }) => {
 
       <div className="form-buttons">
         <button className="btn-primary" onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? 'Adding...' : 'Add'}
+          {isSubmitting ? (editTask ? 'Updating...' : 'Adding...') : editTask ? 'Update' : 'Add'}
         </button>
         <button className="btn-secondary" onClick={handleCancel} disabled={isSubmitting}>
           Cancel

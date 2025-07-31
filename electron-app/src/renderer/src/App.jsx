@@ -7,12 +7,30 @@ import './assets/app.css'
 
 function App() {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
   const [activeTab, setActiveTab] = useState('all')
   const { tasks, loading, error, createTask, deleteTask, updateTask } = useTasks()
 
   const handleCreateTask = async (taskData) => {
     await createTask(taskData)
     setShowCreateForm(false)
+  }
+
+  const handleFormSubmit = async (taskIdOrData, taskData = null) => {
+    if (taskData) {
+      // Это редактирование - первый параметр это ID, второй - данные
+      await updateTask(taskIdOrData, taskData)
+      setEditingTask(null)
+    } else {
+      // Это создание - первый параметр это данные
+      await createTask(taskIdOrData)
+      setShowCreateForm(false)
+    }
+  }
+
+  const handleEditTask = (task) => {
+    setEditingTask(task)
+    setShowCreateForm(false) // Закрываем форму создания если она открыта
   }
 
   const handleDeleteTask = async (taskId) => {
@@ -33,6 +51,7 @@ function App() {
 
   const handleCancelCreate = () => {
     setShowCreateForm(false)
+    setEditingTask(null)
   }
 
   // Фильтрация задач по активной вкладке
@@ -81,6 +100,14 @@ function App() {
 
       {showCreateForm && <TaskForm onSubmit={handleCreateTask} onCancel={handleCancelCreate} />}
 
+      {editingTask && (
+        <TaskForm
+          onSubmit={handleFormSubmit}
+          onCancel={handleCancelCreate}
+          editTask={editingTask}
+        />
+      )}
+
       <TaskTabs activeTab={activeTab} onTabChange={handleTabChange} taskCounts={taskCounts} />
 
       <div className="tasks-container">
@@ -95,6 +122,7 @@ function App() {
             <TaskCard
               key={task.id || index}
               task={task}
+              onEdit={handleEditTask}
               onDelete={handleDeleteTask}
               onToggleComplete={handleToggleComplete}
             />
