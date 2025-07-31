@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import TaskCard from './components/taskCard/TaskCard.jsx'
 import TaskForm from './components/TaskForm/TaskForm.jsx'
 import TaskTabs from './components/TaskTabs/TaskTabs.jsx'
+import Modal from './components/Modal/Modal.jsx'
 import { useTasks } from './hooks/useTasks.js'
 import './assets/app.css'
 
@@ -114,61 +115,67 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      <div className="header-section">
-        <button className="create-task-button" onClick={() => setShowCreateForm(true)}>
-          Add New Task
-        </button>
+    <>
+      <div className={`app-container ${showCreateForm || editingTask ? 'modal-open' : ''}`}>
+        <div className="header-section">
+          <button className="create-task-button" onClick={() => setShowCreateForm(true)}>
+            Add New Task
+          </button>
+        </div>
+
+        <TaskTabs activeTab={activeTab} onTabChange={handleTabChange} taskCounts={taskCounts} />
+
+        <div className="search-section">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search tasks by title or description..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+        </div>
+
+        <div className="tasks-container">
+          {filteredTasks.length === 0 ? (
+            <div className="no-tasks">
+              {searchQuery.trim() ? (
+                `No tasks found for "${searchQuery}"`
+              ) : (
+                <>
+                  {activeTab === 'all' && 'No tasks available'}
+                  {activeTab === 'pending' && 'No pending tasks'}
+                  {activeTab === 'completed' && 'No completed tasks'}
+                </>
+              )}
+            </div>
+          ) : (
+            filteredTasks.map((task, index) => (
+              <TaskCard
+                key={task.id || index}
+                task={task}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onToggleComplete={handleToggleComplete}
+              />
+            ))
+          )}
+        </div>
       </div>
 
-      {showCreateForm && <TaskForm onSubmit={handleCreateTask} onCancel={handleCancelCreate} />}
+      <Modal isOpen={showCreateForm} onClose={handleCancelCreate} title="Add New Task">
+        <TaskForm onSubmit={handleCreateTask} onCancel={handleCancelCreate} />
+      </Modal>
 
-      {editingTask && (
-        <TaskForm
-          onSubmit={handleFormSubmit}
-          onCancel={handleCancelCreate}
-          editTask={editingTask}
-        />
-      )}
-
-      <TaskTabs activeTab={activeTab} onTabChange={handleTabChange} taskCounts={taskCounts} />
-
-      <div className="search-section">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search tasks by title or description..."
-          value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
-        />
-      </div>
-
-      <div className="tasks-container">
-        {filteredTasks.length === 0 ? (
-          <div className="no-tasks">
-            {searchQuery.trim() ? (
-              `No tasks found for "${searchQuery}"`
-            ) : (
-              <>
-                {activeTab === 'all' && 'No tasks available'}
-                {activeTab === 'pending' && 'No pending tasks'}
-                {activeTab === 'completed' && 'No completed tasks'}
-              </>
-            )}
-          </div>
-        ) : (
-          filteredTasks.map((task, index) => (
-            <TaskCard
-              key={task.id || index}
-              task={task}
-              onEdit={handleEditTask}
-              onDelete={handleDeleteTask}
-              onToggleComplete={handleToggleComplete}
-            />
-          ))
+      <Modal isOpen={!!editingTask} onClose={handleCancelCreate} title="Edit Task">
+        {editingTask && (
+          <TaskForm
+            onSubmit={handleFormSubmit}
+            onCancel={handleCancelCreate}
+            editTask={editingTask}
+          />
         )}
-      </div>
-    </div>
+      </Modal>
+    </>
   )
 }
 
