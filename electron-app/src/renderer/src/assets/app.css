@@ -6,7 +6,6 @@
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
-  margin-bottom: 20px;
 }
 
 .create-task-button:hover {
@@ -85,8 +84,35 @@
 }
 
 .header-section {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.sync-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.refresh-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: #1976d2;
+}
+
+.refresh-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .search-section {

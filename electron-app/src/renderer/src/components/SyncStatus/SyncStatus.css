@@ -1,0 +1,39 @@
+.sync-status {
+  display: flex;
+  align-items: center;
+}
+
+.sync-indicator {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sync-indicator.syncing {
+  color: #666;
+  background-color: #f0f0f0;
+  animation: pulse 2s infinite;
+}
+
+.sync-indicator.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+}
+
+.sync-indicator.success {
+  color: #388e3c;
+  background-color: #e8f5e8;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}

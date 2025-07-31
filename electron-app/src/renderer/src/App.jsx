@@ -3,6 +3,7 @@ import TaskCard from './components/taskCard/TaskCard.jsx'
 import TaskForm from './components/TaskForm/TaskForm.jsx'
 import TaskTabs from './components/TaskTabs/TaskTabs.jsx'
 import Modal from './components/Modal/Modal.jsx'
+import SyncStatus from './components/SyncStatus/SyncStatus.jsx'
 import { useTasks } from './hooks/useTasks.js'
 import './assets/app.css'
 
@@ -11,7 +12,18 @@ function App() {
   const [editingTask, setEditingTask] = useState(null)
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const { tasks, loading, error, createTask, deleteTask, updateTask } = useTasks()
+  const {
+    tasks,
+    loading,
+    error,
+    syncing,
+    syncError,
+    lastSyncTime,
+    createTask,
+    deleteTask,
+    updateTask,
+    refreshTasks
+  } = useTasks()
 
   const handleCreateTask = async (taskData) => {
     await createTask(taskData)
@@ -19,14 +31,23 @@ function App() {
   }
 
   const handleFormSubmit = async (taskIdOrData, taskData = null) => {
-    if (taskData) {
-      // Это редактирование - первый параметр это ID, второй - данные
-      await updateTask(taskIdOrData, taskData)
-      setEditingTask(null)
-    } else {
-      // Это создание - первый параметр это данные
-      await createTask(taskIdOrData)
-      setShowCreateForm(false)
+    try {
+      if (taskData) {
+        // Это редактирование - первый параметр это ID, второй - данные
+        await updateTask(taskIdOrData, taskData)
+        setEditingTask(null)
+      } else {
+        // Это создание - первый параметр это данные
+        await createTask(taskIdOrData)
+        setShowCreateForm(false)
+      }
+    } catch (err) {
+      if (taskData && (err.message.includes('404') || err.message.includes('not found'))) {
+        alert('Задача была удалена на сервере. Закрываем форму редактирования.')
+        setEditingTask(null)
+      } else {
+        alert('Ошибка при сохранении задачи: ' + err.message)
+      }
     }
   }
 
@@ -39,7 +60,12 @@ function App() {
     try {
       await deleteTask(taskId)
     } catch (err) {
-      alert('Ошибка при удалении задачи: ' + err.message)
+      if (err.message.includes('404') || err.message.includes('not found')) {
+        // Задача уже была удалена на сервере, просто убираем её из локального состояния
+        console.log('Task was already deleted on server, removing from local state')
+      } else {
+        alert('Ошибка при удалении задачи: ' + err.message)
+      }
     }
   }
 
@@ -47,7 +73,11 @@ function App() {
     try {
       await updateTask(taskId, { completed: !currentCompleted })
     } catch (err) {
-      alert('Ошибка при обновлении задачи: ' + err.message)
+      if (err.message.includes('404') || err.message.includes('not found')) {
+        alert('Задача была удалена или изменена на сервере. Данные обновляются...')
+      } else {
+        alert('Ошибка при обновлении задачи: ' + err.message)
+      }
     }
   }
 
@@ -121,6 +151,12 @@ function App() {
           <button className="create-task-button" onClick={() => setShowCreateForm(true)}>
             Add New Task
           </button>
+          <div className="sync-controls">
+            <SyncStatus syncing={syncing} error={syncError} lastSyncTime={lastSyncTime} />
+            <button className="refresh-button" onClick={refreshTasks} disabled={syncing}>
+              Refresh
+            </button>
+          </div>
         </div>
 
         <TaskTabs activeTab={activeTab} onTabChange={handleTabChange} taskCounts={taskCounts} />
